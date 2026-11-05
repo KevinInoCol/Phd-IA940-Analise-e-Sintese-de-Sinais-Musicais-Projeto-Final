@@ -1,0 +1,8 @@
+# Python 3.11 (TensorFlow ainda não suporta 3.14)
+tensorflow>=2.16
+tensorflow-hub
+tf-keras
+librosa
+soundfile
+numpy
+pandas
