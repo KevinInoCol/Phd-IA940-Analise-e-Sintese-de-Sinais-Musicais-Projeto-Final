@@ -1,8 +1,11 @@
 # Python 3.11 (TensorFlow ainda não suporta 3.14)
 tensorflow>=2.16
 tensorflow-hub
+setuptools<81   # tensorflow-hub ainda importa pkg_resources
 tf-keras
 librosa
 soundfile
 numpy
 pandas
+scikit-learn
+matplotlib
