@@ -5,7 +5,8 @@
 Grupo: Kevin Inofuente Colque, Luiza Viana Souza e Guilherme Maia Masetto · Trilha **Voz**
 
 - **Apresentação:** https://ia940-final.vercel.app (16 slides, com áudios e espectrograma em tempo real; `#n` na URL abre o slide n)
-- **Notebook de entrega:** [`Projeto_Final.ipynb`](Projeto_Final.ipynb)
+- **Notebook de entrega:** [`Projeto_Final.ipynb`](Projeto_Final.ipynb) — já executado. Para ler com os **áudios tocando**, abra no [nbviewer](https://nbviewer.org/github/KevinInoCol/Phd-IA940-Analise-e-Sintese-de-Sinais-Musicais-Projeto-Final/blob/main/Projeto_Final.ipynb) (o GitHub não toca áudio e pode não renderizar notebooks grandes).
+- Para **só ler** o projeto não é preciso rodar nada nem baixar o ESD.
 
 ## Objetivo
 
