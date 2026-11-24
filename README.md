@@ -29,7 +29,12 @@ src/
 ├── dataset.py    # indexa o ESD: caminho, locutor, emoção, frase, split oficial
 ├── features.py   # mfcc_medio(y) -> (20,) e yamnet_embedding(y) -> (1024,)
 ├── extract.py    # extrai tudo e salva X_mfcc.npy, X_yamnet.npy e meta.csv
-└── classify.py   # 5 divisões treino/teste, z-score só no treino, kNN, acurácia
+├── classify.py   # 5 divisões treino/teste, z-score só no treino, kNN, acurácia
+├── degradation.py    # RI sintética (ruído com decaimento exponencial), reverberar(y, rt60)
+├── extract_reverb.py # extrai MFCC/YAMNet de todos os áudios em cada RT60
+├── curves.py         # curvas acurácia × RT60, condição principal e pareada, diferença pareada
+└── failures.py       # geometria do deslocamento, scores do YAMNet, F0, exemplos audíveis
+Projeto_Final.ipynb   # notebook de entrega (executado, com áudios e gráficos)
 ```
 
 As funções de `features.py` recebem a **forma de onda** e não o caminho do arquivo. Assim, na etapa de degradação basta fazer `features(reverberar(y, rt60))`.
@@ -95,15 +100,32 @@ Leitura:
 | 4 | Normalizar com z-score (média e desvio só do treino) | 06/11 | Feito |
 | 5 | Classificar com kNN (mesmo k para as duas representações) | 06/11 | Feito |
 | 6 | Medir a acurácia (média ± desvio) | 06/11 | Feito |
-| 7 | Reverberar os áudios, RT60 de 0 a 2 s, ≥ 5 níveis | 13/11 | Pendente |
-| 8 | Repetir os passos 2–6 em cada nível → curvas | 13/11 | Pendente |
-| 9 | Variabilidade: a diferença é maior que a dispersão? | 27/11 | Pendente |
-| 10 | Análise de falhas com exemplos audíveis | 27/11 | Pendente |
-| 11 | Notebook, apresentação e defesa oral | 04/12 | Pendente |
+| 7 | Reverberar os áudios, RT60 de 0 a 2 s, ≥ 5 níveis | 13/11 | Feito (9 níveis) |
+| 8 | Repetir os passos 2–6 em cada nível → curvas | 13/11 | Feito |
+| 9 | Variabilidade: a diferença é maior que a dispersão? | 27/11 | Feito |
+| 10 | Análise de falhas com exemplos audíveis | 27/11 | Feito |
+| 11 | Notebook, apresentação e defesa oral | 04/12 | Notebook feito; falta apresentação |
 
-## Pontos em aberto
+## Resultado com reverberação (23/11)
 
-- Reverberação só no teste ou no treino e no teste?
-- Cortar ou não a cauda da reverberação (a convolução alonga o áudio em até ~RT60)?
-- Valor de k: fixar antes da reverberação (usamos k = 5 nos slides).
-- A versão baixada do ESD não traz pastas train/evaluation/test; a coluna `split_oficial` de `meta.csv` é calculada por uma regra suposta (20 / 30 / 300) e não é usada na classificação.
+Treino limpo, teste reverberado, k = 5, 5 divisões (média ± desvio, %):
+
+| RT60 (s) | 0 | 0,1 | 0,2 | 0,3 | 0,5 | 0,7 | 1,0 | 1,5 | 2,0 |
+|---|---|---|---|---|---|---|---|---|---|
+| MFCC | 98,3 ± 0,2 | 97,9 ± 0,2 | 97,8 ± 0,2 | 97,5 ± 0,2 | 96,1 ± 0,2 | 94,2 ± 0,3 | 90,4 ± 0,3 | 84,2 ± 0,3 | 79,6 ± 0,6 |
+| YAMNet | 55,4 ± 0,6 | 49,6 ± 0,6 | 30,4 ± 0,2 | 21,4 ± 0,5 | 13,9 ± 0,7 | 10,9 ± 0,5 | 9,9 ± 0,3 | 9,4 ± 0,5 | 9,6 ± 0,3 |
+
+- A previsão (YAMNet cai mais devagar) **não se confirmou**: o YAMNet cai à metade em 0,2 s e chega ao acaso em ≈ 0,7 s; o MFCC médio mantém 80 % em 2 s.
+- Na condição pareada (treino e teste reverberados) o YAMNet mantém 42–55 %: a informação de locutor continua no embedding, mas a reverberação o **desloca** (até 40× a distância entre locutores).
+- Não é efeito do z-score (igual sem normalização ou com L2) nem só da cauda (ablação com cauda cortada: mesma conclusão).
+- Explicação do MFCC: a RI tem cauda espectralmente plana, então o espectro médio de longo prazo (que é o que o MFCC médio resume) quase não muda.
+
+Detalhes, equações, áudios e análise de falhas em `Projeto_Final.ipynb`.
+
+## Decisões tomadas (23/11)
+
+- Reverberação **só no teste** (condição principal, mede robustez); treino e teste reverberados como condição secundária.
+- Cauda **mantida** (convolução completa); RMS igualado ao do original; uma RI por arquivo e nível.
+- DRR = 0 dB em RT60 = 0,5 s (DRR = 10·log10(0,5/RT60)).
+- k = 5 fixado antes da reverberação; k = 1 reportado como verificação.
+- Emoções misturadas em treino e teste.
