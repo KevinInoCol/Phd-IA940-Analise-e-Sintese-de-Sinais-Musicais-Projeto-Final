@@ -4,6 +4,9 @@
 
 Grupo: Kevin Inofuente Colque, Luiza Viana Souza e Guilherme Maia Masetto · Trilha **Voz**
 
+- **Apresentação:** https://ia940-final.vercel.app (16 slides, com áudios e espectrograma em tempo real; `#n` na URL abre o slide n)
+- **Notebook de entrega:** [`Projeto_Final.ipynb`](Projeto_Final.ipynb)
+
 ## Objetivo
 
 Comparar uma representação clássica de áudio com uma representação aprendida e medir como cada uma se degrada quando o som é alterado de forma controlada.
@@ -33,9 +36,14 @@ src/
 ├── degradation.py    # RI sintética (ruído com decaimento exponencial), reverberar(y, rt60)
 ├── extract_reverb.py # extrai MFCC/YAMNet de todos os áudios em cada RT60
 ├── curves.py         # curvas acurácia × RT60, condição principal e pareada, diferença pareada
-└── failures.py       # geometria do deslocamento, scores do YAMNet, F0, exemplos audíveis
+├── failures.py       # geometria do deslocamento, scores do YAMNet, F0, exemplos audíveis
+└── slides_final.py   # gera a apresentação final (Final_PT.html e ia940-final/)
 Projeto_Final.ipynb   # notebook de entrega (executado, com áudios e gráficos)
+ia940-final/          # apresentação gerada: index.html + audios/ + img/ + katex/ (é o que vai para o Vercel)
+Final_PT.html         # cópia da apresentação para abrir da raiz (aponta para ia940-final/)
 ```
+
+`src/` é o código; `ia940-final/` é a saída gerada por `src/slides_final.py`. Para mudar a apresentação, edite o gerador e rode de novo, não o `index.html`.
 
 As funções de `features.py` recebem a **forma de onda** e não o caminho do arquivo. Assim, na etapa de degradação basta fazer `features(reverberar(y, rt60))`.
 
@@ -59,6 +67,25 @@ Saída em `data/features/`: `X_mfcc.npy` (N × 20), `X_yamnet.npy` (N × 1024) e
 ```bash
 # classificação sem degradação (salva data/features/resultados_sem_degradacao_k5.csv)
 python -m src.classify --features data/features --k 5 --divisoes 5
+```
+
+Com reverberação (rodar da pasta do projeto, com `PYTHONPATH=.`):
+
+```bash
+# features dos áudios reverberados, 8 níveis (≈ 4 min por nível) -> data/features_reverb/rt<X.X>/
+PYTHONPATH=. python -m src.extract_reverb
+# ablação com a cauda cortada no comprimento original -> data/features_reverb_semcauda/
+PYTHONPATH=. python -m src.extract_reverb --cortar-cauda --saida data/features_reverb_semcauda --niveis 0.2 0.5 1.0 2.0
+
+# curvas acurácia × RT60, condições principal e pareada -> data/resultados/curvas_k5.csv
+PYTHONPATH=. python -m src.curves --k 5 --divisoes 5
+
+# notebook completo (diagnósticos, análise de falhas, áudios)
+PYTHONPATH=. jupyter nbconvert --to notebook --execute --inplace Projeto_Final.ipynb
+
+# apresentação (precisa de data/resultados/ e data/fallas/, gerados pelo notebook)
+PYTHONPATH=. python -m src.slides_final
+cd ia940-final && vercel deploy --prod
 ```
 
 ## Resultado sem degradação (06/11)
@@ -104,7 +131,7 @@ Leitura:
 | 8 | Repetir os passos 2–6 em cada nível → curvas | 13/11 | Feito |
 | 9 | Variabilidade: a diferença é maior que a dispersão? | 27/11 | Feito |
 | 10 | Análise de falhas com exemplos audíveis | 27/11 | Feito |
-| 11 | Notebook, apresentação e defesa oral | 04/12 | Notebook feito; falta apresentação |
+| 11 | Notebook, apresentação e defesa oral | 27/11 | Notebook e apresentação feitos; falta a defesa oral |
 
 ## Resultado com reverberação (23/11)
 
@@ -120,7 +147,9 @@ Treino limpo, teste reverberado, k = 5, 5 divisões (média ± desvio, %):
 - Não é efeito do z-score (igual sem normalização ou com L2) nem só da cauda (ablação com cauda cortada: mesma conclusão).
 - Explicação do MFCC: a RI tem cauda espectralmente plana, então o espectro médio de longo prazo (que é o que o MFCC médio resume) quase não muda.
 
-Detalhes, equações, áudios e análise de falhas em `Projeto_Final.ipynb`.
+Análise de falhas (RT60 = 0,2 s, divisão 0): em 69 % do teste só o MFCC acerta, em < 1 % só o YAMNet. Os erros do YAMNet vão para poucos locutores “atratores” (0014, 0012, 0017, 0020: 64 % dos erros); os do MFCC se concentram no par 0016 ↔ 0018.
+
+Detalhes, equações, áudios e análise de falhas em `Projeto_Final.ipynb`; versão resumida na [apresentação](https://ia940-final.vercel.app).
 
 ## Decisões tomadas (23/11)
 
